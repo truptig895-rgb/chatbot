@@ -171,15 +171,20 @@ try {
             },
             body: JSON.stringify(data),
         })
-            .then(response => response.text())
-            .then(data => {
-
-
-                window.location = `/result/${data}`
+            .then(async response => {
+                const payload = await response.json()
+                if (!response.ok) {
+                    throw new Error(payload.error || 'Unable to save your result.')
+                }
+                if (payload.local && payload.result) {
+                    localStorage.setItem(`result:${payload.url}`, JSON.stringify(payload.result))
+                }
+                window.location = `/result/${encodeURIComponent(payload.url)}`
             })
             .catch(error => {
                 // Handle any errors that occurred during the fetch
                 console.error('Error:', error);
+                alert(error.message)
             });
 
 

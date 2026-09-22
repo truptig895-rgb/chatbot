@@ -210,8 +210,22 @@ def old_quiz():
 @app.route('/result/<url>')
 
 def result(url):
-   try:
-        data1 = fetch('db/result.json')[url]
+    data1 = fetch('db/result.json').get(url)
+    if data1 is None:
+          return render_template(
+                'result.html',
+                data='{}',
+                username='',
+                percent=0,
+                color='rgb(60, 196, 52);',
+                tag='Result ready',
+                ans='{}',
+                correct=0,
+                questions=0,
+                url=url,
+          )
+
+    try:
 
         percent = float(data1['percent'])
         color = 'rgb(60, 196, 52);'
@@ -228,9 +242,8 @@ def result(url):
             return redirect('/')
         database = json.dumps(quiz_data)
         return render_template('result.html',data=database,username=data1['username'],percent=percent,color=color,tag=tag,ans=json.dumps(data1['ans']),correct=data1['correct'],questions = str(len(data1['ans'])),url=url)
-   except:
-       pass
-       return redirect('/')
+    except (KeyError, TypeError, ValueError):
+        return redirect('/')
 @app.route('/result_set',methods=['POST'])
 def result_set():
     data = request.get_json()
@@ -261,8 +274,13 @@ def result_set():
     if isinstance(quiz, dict) and url.endswith('-local'):
         result_data['quiz'] = quiz
     js_data[new_url] = result_data
-    insert('db/result.json',js_data)
-    return new_url
+    try:
+        insert('db/result.json',js_data)
+    except OSError:
+        if not isinstance(result_data.get('quiz'), dict):
+            result_data['quiz'] = get_quiz(url)
+        return jsonify(url=new_url, result=result_data, local=True)
+    return jsonify(url=new_url, local=False)
 
 
 @app.route('/q/<m>')

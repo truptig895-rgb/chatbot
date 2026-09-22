@@ -59,7 +59,7 @@
         <section class="steps">
             <div
                 style="background-color: rgb(255, 0, 0);padding: 20px;width: 60%;position: fixed;top: 20px;color: white;left: 22%;border-radius: 20px;">
-                <h1 style="text-align: center;font-weight: bolder;">Your score is {{correct}}/{{questions}}</h1>
+                <h1 id="score-summary" style="text-align: center;font-weight: bolder;">Your score is {{correct}}/{{questions}}</h1>
             </div>
             <div class="result" style="height: 19cm;border: 4px solid rgb(255, 0, 0);border-radius: 20px;" id="result">
                 <h2 style="visibility: hidden; height: 2cm;" id="none-el">none</h2>
@@ -74,10 +74,10 @@
                     <span id="tag" style="font-size: 25px;font-weight: bolder;color: {{color}};">{{tag}} </span>
                 </div>
                 <br>
-                <h3 style="text-align: center; color: rgb(0, 77, 83);font-size: 2cm;font-weight: bolder;">{{username}}
+                <h3 id="result-username" style="text-align: center; color: rgb(0, 77, 83);font-size: 2cm;font-weight: bolder;">{{username}}
                 </h3>
                 <h3 style="text-align: center;">YOUR OVERALL SCORE</h3>
-                <h3 style="text-align: center; color: {{color}};font-size: 3cm;font-weight: bolder;">{{percent}}%</h3>
+                <h3 id="result-percent" style="text-align: center; color: {{color}};font-size: 3cm;font-weight: bolder;">{{percent}}%</h3>
 
                 <div style="display: flex;flex-direction: row; width: 100%;justify-content: center;margin-left: -20px;">
 
@@ -147,6 +147,17 @@
     <script>
 
         var db = `{{data | safe}}`
+        const resultKey = decodeURIComponent(window.location.pathname.split('/').pop())
+        const localResult = localStorage.getItem(`result:${resultKey}`)
+        let localResultData = null
+        if (localResult) {
+            localResultData = JSON.parse(localResult)
+            db = JSON.stringify(localResultData.quiz)
+            document.getElementById('score-summary').textContent = `Your score is ${localResultData.correct}/${Object.keys(localResultData.ans).length}`
+            document.getElementById('result-username').textContent = localResultData.username
+            document.getElementById('result-percent').textContent = `${localResultData.percent}%`
+            document.getElementById('tag').textContent = Number(localResultData.percent) < 40 ? 'Going good! Keep it up!' : 'Result ready'
+        }
         function replaceCaretWithSup(text) {
             // Use a regular expression to find ^ followed by any number or variable
             var pattern = /(\w+)\^(\w+|\d+)/g;
@@ -169,10 +180,10 @@
         db = replaceCaretWithSup2(db);
 
         db = JSON.parse(db)
-        const ans = JSON.parse(`{{ans | safe}}`)    
+        const ans = localResultData ? localResultData.ans : JSON.parse(`{{ans | safe}}`)
         console.log(ans)
         console.log(db)
-        document.title = `Result for {{username}} of ${db['title']} quiz - AI Quiz Maker`
+        document.title = `Result for ${localResultData ? localResultData.username : '{{username}}'} of ${db['title']} quiz - AI Quiz Maker`
         document.getElementById('wa-link').setAttribute('href', `https://wa.me/?text=*Hi! check my result of ${db['title']} -> ${window.location.href} . I got {{percent}}%. Let's check how much you get!!!*`)
         document.getElementById('re-start').setAttribute('onclick', `window.location = '/q/${db['url']}'`)
         function copy() {
