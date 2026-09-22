@@ -135,7 +135,12 @@ def prompt(inp):
     if response.status_code in (401, 403):
         raise RuntimeError('The AI provider rejected the configured API key. Update OPENROUTER_API_KEY and try again.')
     if not response.ok:
-        raise RuntimeError('The AI quiz service could not create a quiz. Please try again.')
+        try:
+            provider_error = response.json().get('error', {}).get('message')
+        except (ValueError, AttributeError):
+            provider_error = None
+        detail = f' Provider: {provider_error}' if provider_error else ''
+        raise RuntimeError(f'The AI quiz service could not create a quiz.{detail}')
 
     try:
         data = response.json()
@@ -143,7 +148,12 @@ def prompt(inp):
     except (KeyError, IndexError, TypeError, ValueError) as error:
         raise RuntimeError('The AI quiz service returned an invalid response. Please try again.') from error
 
-    return text.replace('```json', '').replace('```', '').strip()
+    cleaned = text.replace('```json', '').replace('```', '').strip()
+    start = cleaned.find('{')
+    end = cleaned.rfind('}')
+    if start >= 0 and end > start:
+        return cleaned[start:end + 1]
+    return cleaned
 
 
 # Create a Flask application instance
@@ -351,7 +361,10 @@ I want same to same formate of json and make sure """ + questions +f""" question
   if not isinstance(quiz, dict) or not quiz.get('url') or quiz.get('all') != question_count:
       return jsonify(error='The AI quiz service returned an incomplete quiz. Please try again.'), 502
 
-  url = add_quiz(quiz['url'], quiz)
+  try:
+      url = add_quiz(quiz['url'], quiz)
+  except OSError:
+      url = f"{quiz['url']}-local"
   quiz['url'] = url
   return jsonify(quiz)
 

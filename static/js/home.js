@@ -89,7 +89,8 @@ async function create() {
     const chapter = document.getElementById('chapter').value
     const level = document.getElementById('level').value
     const question = document.getElementById('question').value
-    const trueFalse = document.getElementById('trueFalse').checked
+    const trueFalseControl = document.getElementById('trueFalse')
+    const trueFalse = trueFalseControl ? trueFalseControl.checked : false
     const errorMessage = document.getElementById('generation-error')
     const submitButton = document.getElementById('generate-quiz')
 
@@ -108,8 +109,8 @@ async function create() {
     const fullUrl = `/make?${queryString}`;
 
     isCreatingQuiz = true
-    submitButton.disabled = true
-    errorMessage.hidden = true
+    if (submitButton) submitButton.disabled = true
+    if (errorMessage) errorMessage.hidden = true
     showBackCard()
 
     try {
@@ -128,12 +129,16 @@ async function create() {
         window.location.assign(`/q/${payload.url}`)
     } catch (error) {
         hideBackCard()
-        errorMessage.textContent = error.message
-        errorMessage.hidden = false
+        if (errorMessage) {
+            errorMessage.textContent = error.message
+            errorMessage.hidden = false
+        } else {
+            alert(error.message)
+        }
         console.warn('Quiz generation failed:', error.message)
     } finally {
         isCreatingQuiz = false
-        submitButton.disabled = false
+        if (submitButton) submitButton.disabled = false
     }
 }
 function uploadFile() {
