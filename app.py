@@ -8,12 +8,15 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
 OPENROUTER_API_KEY = os.getenv('OPENROUTER_API_KEY') or os.getenv('openrouter_api')
 OPENROUTER_MODEL = os.getenv('OPENROUTER_MODEL', 'openai/gpt-oss-20b:free')
 OPENROUTER_API_URL = os.getenv('OPENROUTER_API_URL', 'https://openrouter.ai/api/v1')
 
 
 def insert(file_name,data):
+    file_name = os.path.join(BASE_DIR, file_name)
     # Get the directory path from the file name
     directory = os.path.dirname(file_name)
     # Create the directory if it doesn't exist
@@ -25,6 +28,7 @@ def insert(file_name,data):
     return True
 
 def fetch(file_name):
+    file_name = os.path.join(BASE_DIR, file_name)
     try:
         with open(file_name,'r') as file:
             # This handles cases where the file is empty
@@ -53,10 +57,10 @@ def delete_quiz(url):
 
 def add_quiz(url,data):
 
-    with open('db/no.json','r') as file:
+    with open(os.path.join(BASE_DIR, 'db/no.json'),'r') as file:
         num = int(file.read())
 
-    with open('db/no.json','w') as file:
+    with open(os.path.join(BASE_DIR, 'db/no.json'),'w') as file:
         file.write(str(num+1))
         
     char = str(url[0:1].upper())
